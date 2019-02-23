@@ -1,0 +1,8 @@
+{
+  "database": {
+    "user": "",
+    "database": "employer",
+    "password": "",
+    "port": 5432
+  }
+}

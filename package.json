@@ -1,0 +1,16 @@
+{
+  "name": "pdl",
+  "version": "1.0.0",
+  "description": "temporal database",
+  "main": "index.js",
+  "scripts": {
+    "test": "npm test"
+  },
+  "author": "Harum Lokawati",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.16.4",
+    "nodemon": "^1.18.10",
+    "pg": "^7.8.1"
+  }
+}
