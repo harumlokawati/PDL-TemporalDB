@@ -9,6 +9,7 @@
   "author": "Harum Lokawati",
   "license": "ISC",
   "dependencies": {
+    "@smhg/date-interval": "^1.2.2",
     "express": "^4.16.4",
     "nodemon": "^1.18.10",
     "pg": "^7.8.1",
