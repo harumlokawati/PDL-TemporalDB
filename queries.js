@@ -203,3 +203,61 @@ exports.delete_laundry = (req, res) => {
     }
   });
 }
+
+exports.temporal_join = (req, res) => {
+	console.log(req.query);
+	var tab1 = req.body.tab1;
+	var tab2 = req.body.tab2;
+	var col = req.body.col;
+
+	var q = `
+		SELECT column_name FROM information_schema.columns WHERE (table_name = '${tab1}' OR table_name = '${tab2}') AND (column_name != 'vs' AND column_name != 've' AND column_name != '${col}')
+	`
+	if (tab1 < tab2){
+		q = q + "ORDER BY table_name ASC";
+	} else {
+		q = q + "ORDER BY table_name DESC";
+	}
+	sequelize.query(q).spread((results, metadata) => {
+		var columns = "";
+		for (var i = 0; i < results.length; i++) { 
+			if (i != 0) {
+				columns = columns + ", ";
+			}
+			columns = columns + results[i].column_name;
+		}
+		console.log(columns);
+		sequelize.query(`(
+			SELECT ${tab1}.${col}, ${columns}, ${tab1}.vs, ${tab2}.ve FROM ${tab1} JOIN ${tab2} ON (${tab1}.${col}=${tab2}.${col}) WHERE ${tab1}.vs > ${tab2}.vs AND ${tab1}.ve>${tab2}.ve AND ${tab1}.vs < ${tab2}.ve AND ${tab1}.ve>${tab2}.vs
+			UNION
+			SELECT ${tab1}.${col}, ${columns}, ${tab1}.vs, ${tab1}.ve FROM ${tab1} JOIN ${tab2} ON (${tab1}.${col}=${tab2}.${col}) WHERE ${tab1}.vs >= ${tab2}.vs AND ${tab1}.ve<=${tab2}.ve AND ${tab1}.vs < ${tab2}.ve AND ${tab1}.ve>${tab2}.vs
+			UNION
+			SELECT ${tab1}.${col}, ${columns}, ${tab2}.vs, ${tab1}.ve FROM ${tab1} JOIN ${tab2} ON (${tab1}.${col}=${tab2}.${col}) WHERE ${tab1}.vs < ${tab2}.vs AND ${tab1}.ve<${tab2}.ve AND ${tab1}.vs < ${tab2}.ve AND ${tab1}.ve>${tab2}.vs
+			UNION
+			SELECT ${tab1}.${col}, ${columns}, ${tab2}.vs, ${tab2}.ve FROM ${tab1} JOIN ${tab2} ON (${tab1}.${col}=${tab2}.${col}) WHERE ${tab1}.vs <= ${tab2}.vs AND ${tab1}.ve>=${tab2}.ve AND ${tab1}.vs < ${tab2}.ve AND ${tab1}.ve>${tab2}.vs
+			) ORDER BY laundry_id
+		`).spread((results, metadata) => {
+			res.status(200).send(results);
+		});
+	});
+}
+
+exports.temporal_difference  = (req, res) => {
+	//NOTE: Hanya untuk laundry - employee dan kebalikannya
+	console.log(req.body);
+	var tab1 = req.body.tab1;
+	var tab2 = req.body.tab2;
+
+	sequelize.query(`(
+		SELECT ${tab1}.employee_id, ${tab1}.vs, ${tab1}.ve FROM ${tab1} JOIN ${tab2} ON (${tab1}.employee_id=${tab2}.employee_id) WHERE ${tab1}.vs < ${tab2}.vs AND ${tab1}.ve<${tab2}.ve AND ${tab1}.vs < ${tab2}.ve AND ${tab1}.ve<=${tab2}.vs
+		UNION
+		SELECT ${tab1}.employee_id, ${tab1}.vs, ${tab1}.ve FROM ${tab1} JOIN ${tab2} ON (${tab1}.employee_id=${tab2}.employee_id) WHERE ${tab1}.vs > ${tab2}.vs AND ${tab1}.ve>${tab2}.ve AND ${tab1}.vs >= ${tab2}.ve AND ${tab1}.ve>${tab2}.vs
+		UNION
+		SELECT ${tab1}.employee_id, ${tab1}.vs, ${tab2}.vs AS ve FROM ${tab1} JOIN ${tab2} ON (${tab1}.employee_id=${tab2}.employee_id) WHERE ${tab1}.vs < ${tab2}.vs AND ${tab1}.vs < ${tab2}.ve AND ${tab1}.ve>${tab2}.vs
+		UNION
+		SELECT ${tab1}.employee_id, ${tab2}.ve as vs, ${tab1}.ve FROM ${tab1} JOIN ${tab2} ON (${tab1}.employee_id=${tab2}.employee_id) WHERE ${tab1}.ve>${tab2}.ve AND ${tab1}.vs < ${tab2}.ve AND ${tab1}.ve>${tab2}.vs
+		) ORDER BY employee_id
+	`).spread((results, metadata) => {
+		res.status(200).send(results);
+	});
+}
