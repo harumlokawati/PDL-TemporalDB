@@ -1,14 +1,17 @@
 var express = require('express');
 var app = express();
 var queries = require('./queries.js')
-var { sequelize } = require('./database/sequelize')
+var db = require('./database/sequelize')
+var cors = require('cors');
 
+app.use(cors())
 app.use(express.json());
+
 app.use(express.urlencoded({ extended: false }));
 
-app.post('/select_employee', function(req, res, next) {
-  sequelize.query("SELECT * FROM employee").spread((results, metadata) => {
-    res.status(200).send(results);
+app.get('/select_employee', function(req, res, next) {
+  db.sequelize.query("SELECT * FROM employee").spread((results, metadata) => {
+    res.status(200).send({"data":results, "message":"Success", "status":200});
   });
 });
 

@@ -11,6 +11,13 @@ sequelize
     console.error('Failed to connect:', err);
   });
 
-module.exports = {
-  sequelize
-}
+const db = {};
+
+db.Sequelize = Sequelize;
+db.sequelize = sequelize;
+
+//Models/tables
+db.employee = require('./models/employee.js')(sequelize, Sequelize);
+db.laundry = require('./models/laundry.js')(sequelize, Sequelize);
+
+module.exports = db;
