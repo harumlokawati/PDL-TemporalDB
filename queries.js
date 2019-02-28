@@ -1,6 +1,24 @@
 var { sequelize } = require('./database/sequelize')
 var utils = require('./utils.js')
 
+exports.temporal_selection = (req,res) => {
+  var tab = req.body.tab;
+  var col = req.body.col;
+  var pred = req.body.pred;
+  
+  var q = `
+    SELECT ${col}, vs, ve FROM ${tab} WHERE ${pred}
+  `
+  sequelize.query(q).spread((results, metadata) => {
+    if (results) {
+      res.status(200).send(results);
+    } else {
+      res.status(400).send("Data not found");
+    }
+  });
+
+}
+
 exports.insert_employee = (req, res) => {
   var employee_id = req.body.employee_id;
   var name = req.body.name;
@@ -331,38 +349,86 @@ exports.temporal_union = (req,res) => {
   console.log(req.body)
   var tab1 = req.body.tab1;
   var tab2 = req.body.tab2;
+  var list_cleaned = [];
 
   var q = `
     SELECT * FROM ${tab1} UNION ALL SELECT * FROM ${tab2}
   `
   sequelize.query(q).spread((results, metadata) => {
     if (results) {
-      if(!Array.isArray(results)) {
-        results = new Array(results);
-        console.log("results is not an array")
-      }
-
       for (var i = 0; i < results.length; i++) { 
         data = results[i];
-        var j = 0;
+        // var j = 0;
         results.forEach(function(a) {
           var match = a.laundry_id.match(data.laundry_id)
           if (match) {
-            if (data.vs == a.ve) {
+            if (data.vs <= a.vs && data.ve >= a.ve) {
+              a.ve = data.ve;
+              a.vs = data.vs;
+            } else if (data.vs <= a.vs && data.vs <= a.ve && data.ve >= a.vs) {
+              data.ve = a.ve;
+              a.vs = data.vs;
+            } else if (data.vs >= a.vs && data.vs <= a.ve && data.ve >= a.ve) {
               data.vs = a.vs;
-              results.splice(j,1);
+              a.ve = data.ve;
             }
+            list_cleaned = utils.arrUnique(results);
           }
-          j++;
         });
       }
-
     }   
-	if (results){	
-		res.status(200).send({"data":results, "message":"Union success! Return {$results.length} data!", "status":200});
-	} else {
-		res.status(400).send("FAIL");
-	}
+    if (list_cleaned.length > 0) {
+      res.status(200).send(list_cleaned);
+    } else {
+      res.status(400).send("Data not found");
+    }
   });
-
 }
+
+exports.temporal_projection =(req, res) => {
+  console.log(req.body);
+  var tab = req.body.tab;
+  var col = req.body.col;
+  var columns = col.split(",");
+  var list_cleaned = [];
+
+  var q = `
+    SELECT ${col}, vs, ve FROM ${tab}
+  `
+
+  sequelize.query(q).spread((results, metadata) => {
+    if (results) {
+     
+      for (var i = 0; i < results.length; i++) { 
+        data = results[i];
+        results.forEach(function(a) {
+          var countmatch = 0;
+          for (var count = 0; count < columns.length; count++) {
+            if (data[columns[count]] == a[columns[count]]) {
+              countmatch++;
+            }
+          }
+          if (countmatch == columns.length) {
+            if (data.vs <= a.vs && data.ve >= a.ve) {
+              a.ve = data.ve;
+              a.vs = data.vs;
+            } else if (data.vs <= a.vs && data.vs <= a.ve && data.ve >= a.vs) {
+              data.ve = a.ve;
+              a.vs = data.vs;
+            } else if (data.vs >= a.vs && data.vs <= a.ve && data.ve >= a.ve) {
+              data.vs = a.vs;
+              a.ve = data.ve;
+            }
+
+            list_cleaned = utils.arrUnique(results);
+          }
+        });
+      }
+    }
+    if (list_cleaned.length > 0) {
+      res.status(200).send(list_cleaned);
+    } else {
+      res.status(400).send("Data not found");
+    }
+  });
+} 

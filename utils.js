@@ -1,3 +1,5 @@
+var _ = require('lodash');
+
 exports.merge_union = (results, vs, ve) => {
   var time_results = [];
   var not_inserted = true;
@@ -43,4 +45,16 @@ exports.merge_substract = (results, vs, ve) => {
   });
   console.log(time_results);
   return time_results;
+}
+
+exports.arrUnique = (results) => {
+    var cleaned = [];
+    results.forEach(function(itm) {
+        var unique = true;
+        cleaned.forEach(function(itm2) {
+            if (_.isEqual(itm, itm2)) unique = false;
+        });
+        if (unique)  cleaned.push(itm);
+    });
+    return cleaned;
 }
