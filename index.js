@@ -40,6 +40,10 @@ app.post('/temporal_union', function(req, res, next) {
   queries.temporal_union(req,res);
 });
 
+app.post('/temporal_projection', function(req, res, next) {
+  queries.temporal_projection(req,res);
+});
+
 app.listen(4000, function () {
     console.log('Server is running.. on Port 4000');
 });
