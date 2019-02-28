@@ -39,6 +39,30 @@ app.delete('/delete_laundry', function(req, res, next) {
   queries.delete_laundry(req, res);
 });
 
+app.post('/temporal_union', function(req, res, next) {
+  queries.temporal_union(req,res);
+});
+
+app.post('/temporal_projection', function(req, res, next) {
+  queries.temporal_projection(req,res);
+});
+
+app.post('/temporal_join', function(req, res, next) {
+  queries.temporal_join(req,res);
+});
+
+app.post('/select', function(req, res, next) {
+  queries.select(req,res);
+});
+
+app.post('/temporal_difference', function(req, res, next) {
+  queries.temporal_difference(req,res);
+});
+
+app.post('/timeslice', function(req, res, next) {
+  queries.timeslice(req,res);
+});
+
 app.listen(4000, function () {
     console.log('Server is running.. on Port 4000');
 });
