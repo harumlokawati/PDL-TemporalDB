@@ -261,3 +261,40 @@ exports.temporal_difference  = (req, res) => {
 		res.status(200).send(results);
 	});
 }
+
+exports.temporal_union = (req,res) => {
+  //NOTE : Hanya untuk laundry - laundry_member
+  console.log(req.body)
+  var tab1 = req.body.tab1;
+  var tab2 = req.body.tab2;
+
+  var q = `
+    SELECT * FROM ${tab1} UNION ALL SELECT * FROM ${tab2}
+  `
+  sequelize.query(q).spread((results, metadata) => {
+    if (results) {
+      if(!Array.isArray(results)) {
+        results = new Array(results);
+        console.log("results is not an array")
+      }
+
+      for (var i = 0; i < results.length; i++) { 
+        data = results[i];
+        var j = 0;
+        results.forEach(function(a) {
+          var match = a.laundry_id.match(data.laundry_id)
+          if (match) {
+            if (data.vs == a.ve) {
+              data.vs = a.vs;
+              results.splice(j,1);
+            }
+          }
+          j++;
+        });
+      }
+
+    }   
+    res.status(200).send(results);
+  });
+
+}
