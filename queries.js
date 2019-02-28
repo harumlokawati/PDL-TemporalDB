@@ -242,6 +242,45 @@ exports.temporal_join = (req, res) => {
 	});
 }
 
+exports.select  = (req, res) => {
+	console.log(req.body);
+	var tab = req.body.tab;
+	var rel = req.body.rel;
+	var ts = req.body.ts;
+	var te = req.body.te;
+	var q = `SELECT * FROM ${tab} WHERE `;
+	if (rel == 1) {			//Before
+		q = q + `${tab}.ve < '${ts}'`;
+	} else if (rel == 2) {	//After
+		q = q + `${tab}.vs > '${te}'`;
+	} else if (rel == 3) {	//Equal
+		q = q + `${tab}.vs = '${ts}' AND ${tab}.ve = '${te}'`;
+	} else if (rel == 4) {	//Meets
+		q = q + `${tab}.ve = '${ts}'`;
+	} else if (rel == 5) {	//Met by
+		q = q + `${tab}.vs = '${te}'`;
+	} else if (rel == 6) {	//Overlaps
+		q = q + `${tab}.vs < '${ts}' AND ${tab}.ve < '${te}' AND ${tab}.ve > '${ts}'`;
+	} else if (rel == 7) {	//Overlapped by
+		q = q + `${tab}.vs > '${ts}' AND ${tab}.vs < '${te}' AND ${tab}.ve > '${te}'`;
+	} else if (rel == 8) {	//During
+		q = q + `${tab}.vs > '${ts}' AND ${tab}.ve < '${te}'`;
+	} else if (rel == 9) {	//Contains
+		q = q + `${tab}.vs < '${ts}' AND ${tab}.ve > '${te}'`;
+	} else if (rel == 10) {	//Starts
+		q = q + `${tab}.vs = '${ts}' AND ${tab}.ve < '${te}'`;
+	} else if (rel == 11) {	//Started by
+		q = q + `${tab}.vs = '${ts}' AND ${tab}.ve > '${te}'`;
+	} else if (rel == 12) {	//Finishes
+		q = q + `${tab}.vs > '${ts}' AND ${tab}.ve = '${te}'`;
+	} else if (rel == 13) {	//Finished by
+		q = q + `${tab}.vs < '${ts}' AND ${tab}.ve = '${te}'`;
+	}
+	sequelize.query(q).spread((results, metadata) => {
+		res.status(200).send(results);
+	});
+}
+
 exports.temporal_difference  = (req, res) => {
 	//NOTE: Hanya untuk laundry - employee dan kebalikannya
 	console.log(req.body);
