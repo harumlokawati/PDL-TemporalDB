@@ -28,12 +28,12 @@ exports.insert_employee = (req, res) => {
             console.log("inserted");
           });
       });
-      res.status(200).send("Insert new time for employee success");
+        res.status(200).send({"data":[], "message":"Insert new time for employee success!", "status":200});
     }else{
       console.log('failed');
       sequelize.query(`INSERT INTO employee(employee_id, name, salary, vs, ve) VALUES($1, $2, $3, $4, $5)`,
       { bind: [employee_id, name, salary,vs,ve]}).spread((results, metadata) => {
-        res.status(200).send("Insert new employee success");
+        res.status(200).send({"data":[], "message":"Insert new employee success!", "status":200});
       });
     }
   });
@@ -68,14 +68,14 @@ exports.insert_laundry = (req, res) => {
             console.log("inserted");
           });
       });
-      res.status(200).send("Insert new time for laundry success");
+      res.status(200).send({"data":[], "message":"Insert new time for laundry success!", "status":200});
     }else{
       console.log('failed');
       sequelize.query(`INSERT INTO laundry(laundry_id, cust_name, emp_id, service, price, vs, ve) VALUES($1, $2, $3, $4, $5, $6, $7)`,
           { bind: [laundry_id, cust_name, emp_id, service, price, vs,ve]}).spread((results, metadata) => {
             console.log("Insert success");
       });
-      res.status(200).send("Insert new laundry success");
+      res.status(200).send({"data":[], "message":"Insert new laundry success!", "status":200});
     }
   });
 }
@@ -99,9 +99,9 @@ exports.update_employee = (req, res) => {
       { bind: [employee_id, name, salary,vs,ve]}).spread((results, metadata) => {
           console.log("updated");
       });
-      res.status(200).send("Updated")
+      res.status(200).send({"data":[], "message":"Update success!", "status":200});
     }else{
-      res.status(400).send("Data not found");
+      res.status(400).send({"data":[], "message":"Data not found!", "status":400});
     }
   });
 }
@@ -128,9 +128,9 @@ exports.update_laundry = (req, res) => {
         { bind: [laundry_id, cust_name, emp_id, service, price, vs, ve]}).spread((results, metadata) => {
           console.log("updated");
       });
-      res.status(200).send("Updated")
+      res.status(200).send({"data":[], "message":"Update success!", "status":200});
     }else{
-      res.status(400).send("Data not found");
+      res.status(400).send({"data":[], "message":"Data not found!", "status":400});
     }
   });
 }
@@ -161,9 +161,9 @@ exports.delete_employee = (req, res) => {
             console.log("inserted");
           });
       });
-      res.status(200).send("Delete success")
+      res.status(200).send({"data":[], "message":"Delete success!", "status":200});
     }else{
-      res.status(400).send("Data not found");
+      res.status(400).send({"data":[], "message":"Data not found!", "status":400});
     }
   });
 }
@@ -197,9 +197,9 @@ exports.delete_laundry = (req, res) => {
             console.log("inserted");
       });
       });
-      res.status(200).send("Delete success")
+      res.status(200).send({"data":[], "message":"Delete success!", "status":200});
     }else{
-      res.status(400).send("Data not found");
+      res.status(400).send({"data":[], "message":"Data not found!", "status":400});
     }
   });
 }
@@ -237,7 +237,11 @@ exports.temporal_join = (req, res) => {
 			SELECT ${tab1}.${col}, ${columns}, ${tab2}.vs, ${tab2}.ve FROM ${tab1} JOIN ${tab2} ON (${tab1}.${col}=${tab2}.${col}) WHERE ${tab1}.vs <= ${tab2}.vs AND ${tab1}.ve>=${tab2}.ve AND ${tab1}.vs < ${tab2}.ve AND ${tab1}.ve>${tab2}.vs
 			) ORDER BY laundry_id
 		`).spread((results, metadata) => {
-			res.status(200).send(results);
+			if (results){	
+				res.status(200).send({"data":results, "message":"Join success! Return {$results.length} data!", "status":200});
+			} else {
+				res.status(400).send("FAIL");
+			}
 		});
 	});
 }
@@ -277,7 +281,11 @@ exports.select  = (req, res) => {
 		q = q + `${tab}.vs < '${ts}' AND ${tab}.ve = '${te}'`;
 	}
 	sequelize.query(q).spread((results, metadata) => {
-		res.status(200).send(results);
+		if (results){	
+			res.status(200).send({"data":results, "message":"Selection success! Return {$results.length} data!", "status":200});
+		} else {
+			res.status(400).send("FAIL");
+		}
 	});
 }
 
@@ -297,7 +305,24 @@ exports.temporal_difference  = (req, res) => {
 		SELECT ${tab1}.employee_id, ${tab2}.ve as vs, ${tab1}.ve FROM ${tab1} JOIN ${tab2} ON (${tab1}.employee_id=${tab2}.employee_id) WHERE ${tab1}.ve>${tab2}.ve AND ${tab1}.vs < ${tab2}.ve AND ${tab1}.ve>${tab2}.vs
 		) ORDER BY employee_id
 	`).spread((results, metadata) => {
-		res.status(200).send(results);
+		if (results){	
+			res.status(200).send({"data":results, "message":"Difference success! Return {$results.length} data!", "status":200});
+		} else {
+			res.status(400).send("FAIL");
+		}
+
+	});
+}
+
+exports.timeslice  = (req, res) => {
+	var tab = req.body.tab;
+	var t = req.body.t;
+	sequelize.query(`SELECT * FROM ${tab} WHERE ${tab}.vs <= '${t}' AND ${tab}.ve > '${t}'`).spread((results, metadata) => {
+		if (results){	
+			res.status(200).send({"data":results, "message":"Timeslice success! Return {$results.length} data!", "status":200});
+		} else {
+			res.status(400).send("FAIL");
+		}
 	});
 }
 
@@ -333,7 +358,11 @@ exports.temporal_union = (req,res) => {
       }
 
     }   
-    res.status(200).send(results);
+	if (results){	
+		res.status(200).send({"data":results, "message":"Union success! Return {$results.length} data!", "status":200});
+	} else {
+		res.status(400).send("FAIL");
+	}
   });
 
 }
